@@ -1,0 +1,35 @@
+FROM ubuntu:16.04
+
+MAINTAINER Alfredo Bello <skuarch@yahoo.com.mx>
+
+ADD ./pg_hba.conf ./startup.sh ./postgresql.conf /tmp/
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANGUAGE=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LC_TYPE=en_US.UTF-8
+
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
+    export LANGUAGE=en_US.UTF-8 && \
+    export LC_ALL=en_US.UTF-8 && \
+    export LANG=en_US.UTF-8 && \
+    export LC_TYPE=en_US.UTF-8 && \
+    apt-get update -y && \
+    apt-get install language-pack-en sudo -y -f && \
+    sudo locale-gen en_US en_US.UTF-8 && \
+    sudo dpkg-reconfigure locales && \
+    apt-get install postgresql postgresql-contrib -y -f && \
+    rm /etc/postgresql/9.5/main/pg_hba.conf && \
+    mv /tmp/pg_hba.conf /etc/postgresql/9.5/main/ && \
+    rm /etc/postgresql/9.5/main/postgresql.conf && \
+    mv /tmp/postgresql.conf /etc/postgresql/9.5/main/ && \
+    mv /tmp/startup.sh / && \
+    chmod 777 /startup.sh && \
+    mkdir -p /var/run/postgresql && chown -R postgres /var/run/postgresql && \
+    service postgresql start && \
+    sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password 'dragon3s12';"
+
+EXPOSE 5432
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
+CMD /startup.sh
